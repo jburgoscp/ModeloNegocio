@@ -34,18 +34,25 @@ const businessModel = {
         uptime: 99.90
     },
     bcgMatrix: {
-        transferencias: { marketShare: 35, growth: 70, size: 20 },
-        qr: { marketShare: 15, growth: 120, size: 15 },
-        tarjetas: { marketShare: 25, growth: 5, size: 15 },
         remesas: { marketShare: 3, growth: 300, size: 10 },
-        cheques: { marketShare: 8, growth: -10, size: 8 }
+        cripto: { marketShare: 2, growth: 250, size: 8 },
+        transferenciasPull: { marketShare: 5, growth: 180, size: 12 },
+        pagosTransferencias: { marketShare: 4, growth: 200, size: 10 },
+        transferenciasRecurrentes: { marketShare: 6, growth: 150, size: 12 },
+        pspCashout: { marketShare: 35, growth: 70, size: 20 },
+        pspCashin: { marketShare: 30, growth: 65, size: 18 },
+        extraccionTransferencias: { marketShare: 8, growth: -10, size: 8 },
+        masterSend: { marketShare: 6, growth: -15, size: 6 },
+        transferenciasPush: { marketShare: 25, growth: 5, size: 15 },
+        prevencionFraude: { marketShare: 22, growth: 8, size: 14 },
+        debin: { marketShare: 20, growth: 10, size: 12 }
     },
     porterForces: {
-        entrantes: { intensity: 4, impact: "Fintechs como Nubank" }, // Changed to scale 1-5
-        proveedores: { intensity: 3, impact: "Dependencia de ACI" }, // Changed to scale 1-5
-        clientes: { intensity: 4, impact: "Meli tiene gran poder" }, // Changed to scale 1-5
-        sustitutos: { intensity: 3, impact: "Criptomonedas" }, // Changed to scale 1-5
-        rivalidad: { intensity: 4, impact: "Coelsa y Link dominan" } // Changed to scale 1-5
+        entrantes: { intensity: 4, impact: "Fintechs como Nubank" },
+        proveedores: { intensity: 3, impact: "Dependencia de ACI" },
+        clientes: { intensity: 4, impact: "Meli tiene gran poder" },
+        sustitutos: { intensity: 3, impact: "Criptomonedas" },
+        rivalidad: { intensity: 4, impact: "Coelsa y Link dominan" }
     },
     pestelAnalysis: {
         politico: { impact: 7, items: [
@@ -79,10 +86,8 @@ const businessModel = {
             "Nuevas normas contra lavado"
         ]}
     },
-    opportunities: [
-        { title: "Remesas con Cripto", description: "Aprovechar la nueva regulación para capturar el mercado de remesas USA-Latam (crecimiento del 300%)" },
-        { title: "Open Finance", description: "Posicionarse como plataforma de integración para fintechs y bancos tradicionales" }
-    ]
+    opportunities: [],
+    simulatorHistory: []
 };
 
 // Current state
@@ -91,6 +96,7 @@ let editableActive = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    updateOpportunities();
     initNavigation();
     initScenarioControls();
     initPLControls();
@@ -103,6 +109,48 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAllCharts();
     updateDashboard();
 });
+
+// Update opportunities based on PESTEL analysis
+function updateOpportunities() {
+    const pestel = businessModel.pestelAnalysis;
+    const opportunities = [];
+    
+    // Sort PESTEL categories by impact
+    const sortedCategories = Object.keys(pestel).sort((a, b) => pestel[b].impact - pestel[a].impact);
+    
+    // Create opportunities based on top impact categories
+    sortedCategories.slice(0, 3).forEach(category => {
+        const title = getOpportunityTitle(category);
+        const description = getOpportunityDescription(category, pestel[category].impact);
+        opportunities.push({ title, description });
+    });
+    
+    businessModel.opportunities = opportunities;
+}
+
+function getOpportunityTitle(category) {
+    const titles = {
+        politico: "Oportunidad Regulatoria",
+        economico: "Crecimiento en Mercado Clave",
+        social: "Innovación en Experiencia de Usuario",
+        tecnologico: "Adopción Tecnológica",
+        ecologico: "Sostenibilidad Operativa",
+        legal: "Optimización de Cumplimiento"
+    };
+    return titles[category] || "Nueva Oportunidad";
+}
+
+function getOpportunityDescription(category, impact) {
+    const descriptions = {
+        politico: `Aprovechar cambios regulatorios (Impacto: ${impact}/10)`,
+        economico: `Capitalizar tendencias económicas (Impacto: ${impact}/10)`,
+        social: `Responder a demandas sociales emergentes (Impacto: ${impact}/10)`,
+        tecnologico: `Implementar soluciones tecnológicas innovadoras (Impacto: ${impact}/10)`,
+        ecologico: `Reducir impacto ambiental y costos (Impacto: ${impact}/10)`,
+        legal: `Optimizar procesos de cumplimiento (Impacto: ${impact}/10)`
+    };
+    return descriptions[category] || `Oportunidad estratégica (Impacto: ${impact}/10)`;
+}
 
 // Initialize navigation
 function initNavigation() {
@@ -193,6 +241,28 @@ function initPorterControls() {
 function initPESTELControls() {
     document.getElementById('update-pestel').addEventListener('click', function() {
         updatePESTELImpacts();
+        updateOpportunities();
+        updatePESTELOpportunitiesDisplay();
+    });
+}
+
+function updatePESTELOpportunitiesDisplay() {
+    const opportunitiesContainer = document.getElementById('pestel-opportunities');
+    opportunitiesContainer.innerHTML = '';
+    
+    businessModel.opportunities.forEach((opp, index) => {
+        const card = document.createElement('div');
+        card.className = 'kpi-card';
+        card.style.backgroundColor = index === 0 ? '#e8f8e8' : index === 1 ? '#e8e8f8' : '#f8e8f8';
+        card.style.textAlign = 'left';
+        card.style.marginBottom = '15px';
+        
+        card.innerHTML = `
+            <h4 class="editable-cell">${opp.title}</h4>
+            <p class="editable-cell">${opp.description}</p>
+        `;
+        
+        opportunitiesContainer.appendChild(card);
     });
 }
 
@@ -205,6 +275,7 @@ function initSimulatorControls() {
         });
         
         document.getElementById(this.value + '-options').classList.remove('hidden');
+        updateSimulatorOptions();
     });
     
     // Crypto simulation
@@ -226,6 +297,78 @@ function initSimulatorControls() {
     // PESTEL simulation
     document.getElementById('simulate-pestel').addEventListener('click', simulatePESTEL);
     document.getElementById('apply-pestel').addEventListener('click', applyPESTELChanges);
+}
+
+function updateSimulatorOptions() {
+    // Update PESTEL focus options based on highest impact factors
+    const pestel = businessModel.pestelAnalysis;
+    const sortedCategories = Object.keys(pestel).sort((a, b) => pestel[b].impact - pestel[a].impact);
+    
+    const pestelFocusSelect = document.getElementById('pestel-focus');
+    pestelFocusSelect.innerHTML = '';
+    
+    sortedCategories.slice(0, 3).forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = getPESTELFocusLabel(category);
+        pestelFocusSelect.appendChild(option);
+    });
+    
+    // Update Porter strategies order based on force intensities
+    updatePorterStrategiesOrder();
+}
+
+function getPESTELFocusLabel(category) {
+    const labels = {
+        politico: "Político (Regulatorio)",
+        economico: "Económico (Crecimiento)",
+        social: "Social (Experiencia Usuario)",
+        tecnologico: "Tecnológico (Innovación)",
+        ecologico: "Ecológico (Sostenibilidad)",
+        legal: "Legal (Cumplimiento)"
+    };
+    return labels[category] || category;
+}
+
+function updatePorterStrategiesOrder() {
+    const porterData = businessModel.porterForces;
+    const strategiesContainer = document.getElementById('porter-strategies');
+    strategiesContainer.innerHTML = '';
+    
+    // Create array of strategies with their priority based on force intensity
+    const strategies = [
+        { 
+            text: "Fortalecer alianzas con fintechs para contrarrestar nuevos entrantes", 
+            priority: porterData.entrantes.intensity 
+        },
+        { 
+            text: "Diversificar proveedores de infraestructura", 
+            priority: porterData.proveedores.intensity 
+        },
+        { 
+            text: "Desarrollar lealtad con clientes clave (ej: programas de beneficios)", 
+            priority: porterData.clientes.intensity 
+        },
+        { 
+            text: "Innovar en productos para diferenciarse de sustitutos", 
+            priority: porterData.sustitutos.intensity 
+        },
+        { 
+            text: "Enfocarse en nichos no atendidos por competidores", 
+            priority: porterData.rivalidad.intensity 
+        }
+    ];
+    
+    // Sort strategies by priority (highest first)
+    strategies.sort((a, b) => b.priority - a.priority);
+    
+    // Add sorted strategies to the list
+    strategies.forEach(strategy => {
+        const li = document.createElement('li');
+        li.className = 'editable-list-item';
+        li.textContent = strategy.text;
+        strategiesContainer.appendChild(li);
+    });
 }
 
 // Initialize editable cells
@@ -380,6 +523,7 @@ function finishEditing(cell, value, isCurrency, isPercentage, isPorterIntensity 
         if (row && row.dataset.force) {
             businessModel.porterForces[row.dataset.force].intensity = numValue;
             updatePorterChart();
+            updatePorterStrategiesOrder();
         }
     }
     
@@ -440,9 +584,15 @@ function finishTextEditing(element, value) {
         const title = opportunityCard.querySelector('h4');
         const description = opportunityCard.querySelector('p');
         if (element === title) {
-            businessModel.opportunities[0].title = value;
+            const index = Array.from(opportunityCard.parentNode.children).indexOf(opportunityCard);
+            if (index >= 0 && index < businessModel.opportunities.length) {
+                businessModel.opportunities[index].title = value;
+            }
         } else if (element === description) {
-            businessModel.opportunities[0].description = value;
+            const index = Array.from(opportunityCard.parentNode.children).indexOf(opportunityCard);
+            if (index >= 0 && index < businessModel.opportunities.length) {
+                businessModel.opportunities[index].description = value;
+            }
         }
     }
 }
@@ -546,7 +696,7 @@ function updateBCGProduct(product, marketShare, growth) {
     updateBCGChart();
     
     // Update dashboard if this affects financials
-    if (product === 'transferencias' || product === 'qr') {
+    if (product === 'pspCashout' || product === 'pspCashin') {
         updateDashboard();
     }
 }
@@ -581,6 +731,16 @@ function simulateCrypto() {
     document.getElementById('crypto-nps-impact').textContent = '+' + npsImpact + ' puntos';
     
     document.getElementById('crypto-results').style.display = 'block';
+    
+    // Add to history
+    addSimulationHistory('Crypto', {
+        investment,
+        adoption,
+        roi,
+        marketShare,
+        ebitdaImpact,
+        npsImpact
+    });
 }
 
 // Apply crypto changes
@@ -637,6 +797,16 @@ function simulateFintech() {
     document.getElementById('fintech-cost-impact').textContent = costImpact + '%';
     
     document.getElementById('fintech-results').style.display = 'block';
+    
+    // Add to history
+    addSimulationHistory('Fintech', {
+        type,
+        investment,
+        txns,
+        roi,
+        nps,
+        costImpact
+    });
 }
 
 // Apply fintech changes
@@ -703,6 +873,17 @@ function simulateProduct() {
     document.getElementById('product-revenue-impact').textContent = '+' + revenueImpact + '%';
     
     document.getElementById('product-results').style.display = 'block';
+    
+    // Add to history
+    addSimulationHistory('Product', {
+        type,
+        investment,
+        timeline,
+        breakeven,
+        marketShare,
+        churnImpact,
+        revenueImpact
+    });
 }
 
 // Apply product changes
@@ -716,15 +897,15 @@ function applyProductChanges() {
     if (type === 'qr') {
         scenarioData.revenue *= 1.15;
         scenarioData.churnRate = Math.max(0, scenarioData.churnRate - 2);
-        businessModel.bcgMatrix.qr.marketShare += 5;
+        businessModel.bcgMatrix.pagosTransferencias.marketShare += 5;
     } else if (type === 'billetera') {
         scenarioData.revenue *= 1.20;
         scenarioData.churnRate = Math.max(0, scenarioData.churnRate - 3);
-        businessModel.bcgMatrix.qr.marketShare += 3;
+        businessModel.bcgMatrix.transferenciasRecurrentes.marketShare += 3;
     } else { // credito
         scenarioData.revenue *= 1.10;
         scenarioData.churnRate = Math.max(0, scenarioData.churnRate - 1);
-        businessModel.bcgMatrix.tarjetas.marketShare += 2;
+        businessModel.bcgMatrix.transferenciasPush.marketShare += 2;
     }
     
     // Update dashboard and charts
@@ -765,6 +946,16 @@ function simulateBCG() {
     document.getElementById('bcg-market-share').textContent = '+' + marketShareImpact + '%';
     
     document.getElementById('bcg-results').style.display = 'block';
+    
+    // Add to history
+    addSimulationHistory('BCG', {
+        strategy,
+        budget,
+        roi,
+        revenueImpact,
+        ebitdaImpact,
+        marketShareImpact
+    });
 }
 
 // Apply BCG changes
@@ -834,11 +1025,26 @@ function simulatePESTEL() {
         riskImpact = -40 - (investment / 1000000 * 8);
         costImpact = -5 - (investment / 1000000 * 0.5);
         roiTime = 24 - (timeline / 12);
-    } else { // social
+    } else if (focus === 'social') {
         npsImpact = 15 + (investment / 1000000 * 3);
         riskImpact = -15 - (investment / 1000000 * 2);
         costImpact = -3 - (investment / 1000000 * 0.3);
         roiTime = 12 - (timeline / 12);
+    } else if (focus === 'ecologico') {
+        npsImpact = 8 + (investment / 1000000);
+        riskImpact = -20 - (investment / 1000000 * 3);
+        costImpact = -10 - (investment / 1000000);
+        roiTime = 24 - (timeline / 12);
+    } else if (focus === 'legal') {
+        npsImpact = 5 + (investment / 1000000 * 0.5);
+        riskImpact = -30 - (investment / 1000000 * 5);
+        costImpact = -7 - (investment / 1000000 * 0.7);
+        roiTime = 18 - (timeline / 12);
+    } else { // politico
+        npsImpact = 7 + (investment / 1000000);
+        riskImpact = -35 - (investment / 1000000 * 6);
+        costImpact = -6 - (investment / 1000000 * 0.6);
+        roiTime = 20 - (timeline / 12);
     }
     
     document.getElementById('pestel-nps-impact').textContent = '+' + npsImpact + ' puntos';
@@ -847,6 +1053,17 @@ function simulatePESTEL() {
     document.getElementById('pestel-roi-time').textContent = Math.max(6, Math.round(roiTime)) + ' meses';
     
     document.getElementById('pestel-results').style.display = 'block';
+    
+    // Add to history
+    addSimulationHistory('PESTEL', {
+        focus,
+        investment,
+        timeline,
+        npsImpact,
+        riskImpact,
+        costImpact,
+        roiTime
+    });
 }
 
 // Apply PESTEL changes
@@ -865,10 +1082,22 @@ function applyPESTELChanges() {
         scenarioData.nps += 5 + (investment / 1000000);
         scenarioData.costPercentage *= (1 - (0.05 + (investment / 1000000 * 0.005)));
         scenarioData.successRate += 1;
-    } else { // social
+    } else if (focus === 'social') {
         scenarioData.nps += 15 + (investment / 1000000 * 3);
         scenarioData.costPercentage *= (1 - (0.03 + (investment / 1000000 * 0.003)));
         scenarioData.successRate += 3;
+    } else if (focus === 'ecologico') {
+        scenarioData.nps += 8 + (investment / 1000000);
+        scenarioData.costPercentage *= (1 - (0.10 + (investment / 1000000 * 0.01)));
+        scenarioData.uptime += 0.02;
+    } else if (focus === 'legal') {
+        scenarioData.nps += 5 + (investment / 1000000 * 0.5);
+        scenarioData.costPercentage *= (1 - (0.07 + (investment / 1000000 * 0.007)));
+        scenarioData.successRate += 1;
+    } else { // politico
+        scenarioData.nps += 7 + (investment / 1000000);
+        scenarioData.costPercentage *= (1 - (0.06 + (investment / 1000000 * 0.006)));
+        scenarioData.successRate += 1.5;
     }
     
     // Update dashboard and charts
@@ -876,6 +1105,81 @@ function applyPESTELChanges() {
     
     // Show success message
     alert('Los cambios de estrategia PESTEL se han aplicado al modelo actual');
+}
+
+// Add simulation to history
+function addSimulationHistory(type, data) {
+    businessModel.simulatorHistory.push({
+        type,
+        data,
+        timestamp: new Date().toISOString()
+    });
+    
+    updateSimulationHistory();
+}
+
+// Update simulation history display
+function updateSimulationHistory() {
+    const historyContainer = document.getElementById('simulation-history');
+    historyContainer.innerHTML = '';
+    
+    businessModel.simulatorHistory.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginTop = '15px';
+        
+        let content = '';
+        if (item.type === 'Crypto') {
+            content = `
+                <h4>Inversión en Cripto</h4>
+                <p>Inversión: $${formatNumber(item.data.investment)}</p>
+                <p>Adopción: ${item.data.adoption}%</p>
+                <p>ROI: ${item.data.roi}%</p>
+                <button class="btn btn-danger" onclick="removeSimulation(${index})">Eliminar</button>
+            `;
+        } else if (item.type === 'Fintech') {
+            content = `
+                <h4>Alianza con Fintech</h4>
+                <p>Tipo: ${item.data.type}</p>
+                <p>Inversión: $${formatNumber(item.data.investment)}</p>
+                <p>Transacciones adicionales: ${formatNumber(item.data.txns)}</p>
+                <button class="btn btn-danger" onclick="removeSimulation(${index})">Eliminar</button>
+            `;
+        } else if (item.type === 'Product') {
+            content = `
+                <h4>Lanzamiento de Producto</h4>
+                <p>Tipo: ${item.data.type}</p>
+                <p>Inversión: $${formatNumber(item.data.investment)}</p>
+                <p>Impacto en ingresos: +${item.data.revenueImpact}%</p>
+                <button class="btn btn-danger" onclick="removeSimulation(${index})">Eliminar</button>
+            `;
+        } else if (item.type === 'BCG') {
+            content = `
+                <h4>Estrategia BCG</h4>
+                <p>Enfoque: ${item.data.strategy}</p>
+                <p>Presupuesto: $${formatNumber(item.data.budget)}</p>
+                <p>Impacto en EBITDA: +${item.data.ebitdaImpact}%</p>
+                <button class="btn btn-danger" onclick="removeSimulation(${index})">Eliminar</button>
+            `;
+        } else if (item.type === 'PESTEL') {
+            content = `
+                <h4>Estrategia PESTEL</h4>
+                <p>Área: ${item.data.focus}</p>
+                <p>Inversión: $${formatNumber(item.data.investment)}</p>
+                <p>Impacto en NPS: +${item.data.npsImpact} puntos</p>
+                <button class="btn btn-danger" onclick="removeSimulation(${index})">Eliminar</button>
+            `;
+        }
+        
+        card.innerHTML = content;
+        historyContainer.appendChild(card);
+    });
+}
+
+// Remove simulation from history
+function removeSimulation(index) {
+    businessModel.simulatorHistory.splice(index, 1);
+    updateSimulationHistory();
 }
 
 // Update dashboard with current scenario data
@@ -1116,39 +1420,39 @@ function initBCGChart() {
         data: {
             datasets: [
                 {
+                    label: 'Interrogantes',
+                    data: [
+                        { x: 3, y: 300, r: 10 },  // Remesas
+                        { x: 2, y: 250, r: 8 },   // Cripto
+                        { x: 5, y: 180, r: 12 },   // Transferencias Pull
+                        { x: 4, y: 200, r: 10 },   // Pagos con transferencias
+                        { x: 6, y: 150, r: 12 }    // Transferencias Recurrentes
+                    ],
+                    backgroundColor: 'rgba(241, 196, 15, 0.7)'
+                },
+                {
                     label: 'Estrellas',
-                    data: [{
-                        x: 35,
-                        y: 70,
-                        r: 20
-                    }],
+                    data: [
+                        { x: 35, y: 70, r: 20 },   // PSP CashOut
+                        { x: 30, y: 65, r: 18 }    // PSP CashIn
+                    ],
                     backgroundColor: 'rgba(52, 152, 219, 0.7)'
                 },
                 {
                     label: 'Vacas Lecheras',
-                    data: [{
-                        x: 25,
-                        y: 5,
-                        r: 15
-                    }],
+                    data: [
+                        { x: 25, y: 5, r: 15 },    // Transferencias Push
+                        { x: 22, y: 8, r: 14 },    // Prevención del Fraude
+                        { x: 20, y: 10, r: 12 }    // Debin
+                    ],
                     backgroundColor: 'rgba(46, 204, 113, 0.7)'
                 },
                 {
-                    label: 'Interrogantes',
-                    data: [{
-                        x: 3,
-                        y: 300,
-                        r: 10
-                    }],
-                    backgroundColor: 'rgba(241, 196, 15, 0.7)'
-                },
-                {
                     label: 'Perros',
-                    data: [{
-                        x: 8,
-                        y: -10,
-                        r: 8
-                    }],
+                    data: [
+                        { x: 8, y: -10, r: 8 },    // Extracción con transferencias
+                        { x: 6, y: -15, r: 6 }     // MasterSend-VisaDirect
+                    ],
                     backgroundColor: 'rgba(231, 76, 60, 0.7)'
                 }
             ]
@@ -1163,7 +1467,7 @@ function initBCGChart() {
                         text: 'Participación de Mercado (%)'
                     },
                     min: 0,
-                    max: 100
+                    max: 40
                 },
                 y: {
                     title: {
@@ -1178,8 +1482,14 @@ function initBCGChart() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const labels = ['Transferencias', 'Tarjetas', 'Cripto', 'Cheques'];
-                            return labels[context.datasetIndex];
+                            const labels = [
+                                'Remesas', 'Cripto', 'Transferencias Pull', 
+                                'Pagos con transferencias', 'Transferencias Recurrentes',
+                                'PSP CashOut', 'PSP CashIn',
+                                'Transferencias Push', 'Prevención del Fraude', 'Debin',
+                                'Extracción con transferencias', 'MasterSend-VisaDirect'
+                            ];
+                            return labels[context.dataIndex];
                         }
                     }
                 }
@@ -1194,49 +1504,40 @@ function updateBCGChart() {
     
     window.bcgChart.data.datasets = [
         {
+            label: 'Interrogantes',
+            data: [
+                { x: bcgData.remesas.marketShare, y: bcgData.remesas.growth, r: bcgData.remesas.size },
+                { x: bcgData.cripto.marketShare, y: bcgData.cripto.growth, r: bcgData.cripto.size },
+                { x: bcgData.transferenciasPull.marketShare, y: bcgData.transferenciasPull.growth, r: bcgData.transferenciasPull.size },
+                { x: bcgData.pagosTransferencias.marketShare, y: bcgData.pagosTransferencias.growth, r: bcgData.pagosTransferencias.size },
+                { x: bcgData.transferenciasRecurrentes.marketShare, y: bcgData.transferenciasRecurrentes.growth, r: bcgData.transferenciasRecurrentes.size }
+            ],
+            backgroundColor: 'rgba(241, 196, 15, 0.7)'
+        },
+        {
             label: 'Estrellas',
-            data: [{
-                x: bcgData.transferencias.marketShare,
-                y: bcgData.transferencias.growth,
-                r: bcgData.transferencias.size
-            }],
+            data: [
+                { x: bcgData.pspCashout.marketShare, y: bcgData.pspCashout.growth, r: bcgData.pspCashout.size },
+                { x: bcgData.pspCashin.marketShare, y: bcgData.pspCashin.growth, r: bcgData.pspCashin.size }
+            ],
             backgroundColor: 'rgba(52, 152, 219, 0.7)'
         },
         {
             label: 'Vacas Lecheras',
-            data: [{
-                x: bcgData.tarjetas.marketShare,
-                y: bcgData.tarjetas.growth,
-                r: bcgData.tarjetas.size
-            }],
+            data: [
+                { x: bcgData.transferenciasPush.marketShare, y: bcgData.transferenciasPush.growth, r: bcgData.transferenciasPush.size },
+                { x: bcgData.prevencionFraude.marketShare, y: bcgData.prevencionFraude.growth, r: bcgData.prevencionFraude.size },
+                { x: bcgData.debin.marketShare, y: bcgData.debin.growth, r: bcgData.debin.size }
+            ],
             backgroundColor: 'rgba(46, 204, 113, 0.7)'
         },
         {
-            label: 'Interrogantes',
-            data: [{
-                x: bcgData.remesas.marketShare,
-                y: bcgData.remesas.growth,
-                r: bcgData.remesas.size
-            }],
-            backgroundColor: 'rgba(241, 196, 15, 0.7)'
-        },
-        {
             label: 'Perros',
-            data: [{
-                x: bcgData.cheques.marketShare,
-                y: bcgData.cheques.growth,
-                r: bcgData.cheques.size
-            }],
+            data: [
+                { x: bcgData.extraccionTransferencias.marketShare, y: bcgData.extraccionTransferencias.growth, r: bcgData.extraccionTransferencias.size },
+                { x: bcgData.masterSend.marketShare, y: bcgData.masterSend.growth, r: bcgData.masterSend.size }
+            ],
             backgroundColor: 'rgba(231, 76, 60, 0.7)'
-        },
-        {
-            label: 'Estrella Emergente',
-            data: [{
-                x: bcgData.qr.marketShare,
-                y: bcgData.qr.growth,
-                r: bcgData.qr.size
-            }],
-            backgroundColor: 'rgba(155, 89, 182, 0.7)'
         }
     ];
     
